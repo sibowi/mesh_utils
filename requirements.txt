@@ -1,0 +1,13 @@
+# python=3.6.7
+# conda install -c conda-forge pymesh2
+
+matplotlib
+numpy
+jupyter
+meshio
+plotly
+chart_studio
+scikit-image
+tqdm
+torch
+pytorch3d
