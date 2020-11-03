@@ -45,8 +45,9 @@ def load_mesh(path_mesh):
 
 def get_hole(edges_bad_unsorted, holes):
     """
-    TBW.
+    Adapted from MATLAB code by Mariam Andersson (maande@dtu.dk).
 
+    TBW.
     """
 
     # keep track of changes in edges_bad_unsorted
@@ -100,6 +101,8 @@ def get_face_normals(vertices, faces):
 
 def close_holes(mesh):
     """
+    Adapted from MATLAB code by Mariam Andersson (maande@dtu.dk).
+
     Not perfect.
 
     Works for round and not too weird holes that points away from the center of
