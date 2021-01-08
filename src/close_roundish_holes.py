@@ -1,7 +1,7 @@
 import numpy as np
 import pymesh
 
-#### TODO: Redo with pytorch3d??
+#### TODO: Redo with pytorch3d
 
 def load_mesh(path_mesh):
     """
