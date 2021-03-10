@@ -3,8 +3,15 @@ import plotly.graph_objects as go
 import numpy as np
 
 def create_figure_for_inspection(mesh, path_figure):
+    
+    if type(mesh) == tuple:
+        vertices, faces = mesh
+    else:
+        vertices = mesh.vertices
+        faces = mesh.faces
 
-    plot_mesh = get_mesh_plot([mesh.vertices], [mesh.faces], show_edges=True)
+    #plot_mesh = get_mesh_plot([mesh.vertices], [mesh.faces], show_edges=True)
+    plot_mesh = get_mesh_plot([vertices], [faces], show_edges=True)
     
     #### Set layout
     layout = go.Layout(
