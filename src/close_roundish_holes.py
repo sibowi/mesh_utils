@@ -204,10 +204,12 @@ def close_holes(mesh):
         normals_new = get_face_normals(vertices, faces_new)
 
         # compute angles w.r.t. reference vector
-        angles = np.arccos(np.dot(center_all[np.newaxis, :], normals_new.T))
+        #angles = np.arccos(np.dot(center_all[np.newaxis, :], normals_new.T)) ####
+        angles = np.arccos(np.dot(vector_hole_to_center[np.newaxis, :], normals_new.T)) ####
 
         # flip bad normals
-        faces_new[(angles < np.pi/2)[0, :], :] = np.fliplr(faces_new[(angles < np.pi/2)[0, :], :])
+        #faces_new[(angles < np.pi/2)[0, :], :] = np.fliplr(faces_new[(angles < np.pi/2)[0, :], :]) ####
+        faces_new[(angles > np.pi/2)[0, :], :] = np.fliplr(faces_new[(angles > np.pi/2)[0, :], :]) ####
 
         #### add new faces to faces
         faces = np.vstack((faces, faces_new))
