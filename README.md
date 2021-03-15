@@ -1,6 +1,6 @@
 # mesh_utils
 
-### Main functionality
+### Tutorials of main functionality
 
 [Close round-ish holes in meshes](https://github.com/sibowi/mesh_utils/blob/main/notebooks/0_close_roundish_holes_in_meshes_tutorial.ipynb).
 
