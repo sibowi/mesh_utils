@@ -1,45 +1,6 @@
 import numpy as np
-import pymesh
-
-#### TODO: Redo with pytorch3d
-
-def load_mesh(path_mesh):
-    """
-    Because pymesh.read() couldn't read the G6-meshes from Mariam.
-
-    """
-
-    with open(path_mesh) as file:
-        for i, line in enumerate(file):
-            if 'element vertex' in line:
-                n_vertices = int(line.split('element vertex')[-1])
-            if 'element face' in line:
-                n_faces = int(line.split('element face')[-1])
-            if 'end_header' in line:
-                n_lines_in_header = i+1
-                break
-
-    vertices = []
-    faces = []
-
-    with open(path_mesh) as file:
-        for i, line in enumerate(file):
-            if (i >= n_lines_in_header) and (i < n_lines_in_header+n_vertices):
-
-                x, y, z = line.strip().split(' ')
-                vertices.append([float(x), float(y), float(z)])
-
-            elif (i >= n_lines_in_header+n_vertices):
-
-                a, b, c, d = line.strip().split(' ')
-                faces.append([float(b), float(c), float(d)])
-
-    vertices = np.array(vertices)
-    faces = np.array(faces)
-
-    mesh = pymesh.meshio.form_mesh(vertices, faces, voxels=None)
-
-    return mesh
+import torch
+import pytorch3d
 
 
 
@@ -82,24 +43,36 @@ def get_hole(edges_bad_unsorted, holes):
 
 def get_face_normals(vertices, faces):
     """
-
+    Get face normals from vertices and faces by exploiting the 
+    pytorch3d.structures.Meshes class.
+    
+    Parameters
+    ----------
+    vertices : numpy.ndarray, [n_vertices, n_dimensions]
+    faces : numpy.ndarray, [n_faces, n_dimensions]
+    
+    Returns
+    -------
+    face_normals : numpy.ndarray, [n_faces, n_dimensions]
 
     """
+    vertices = torch.Tensor(vertices)
+    faces = torch.Tensor(faces)
 
-    # create mesh-obj in order to utilize pymesh functions
-    mesh = pymesh.form_mesh(vertices, faces)
-
-    # compute face normals
-    mesh.add_attribute('face_normal')
+    # create pytorch3d.structures.Meshes object in order to utilize functions
+    mesh = pytorch3d.structures.Meshes(verts=[vertices], faces=[faces])
 
     # extract face normals
-    face_normals = mesh.get_attribute('face_normal').reshape(len(faces), 3)
+    face_normals = mesh.faces_normals_list()[0]
+    
+    # convert back to numpy.ndarray (redundant)
+    face_normals = face_normals.numpy()
 
     return face_normals
 
 
 
-def close_holes(mesh):
+def close_holes(vertices, faces):
     """
     Adapted from MATLAB code by Mariam Andersson (maande@dtu.dk).
 
@@ -123,32 +96,43 @@ def close_holes(mesh):
             - Make sure the face normals are ok.
         - Enjoy your new closed mesh.
 
+    Done in an awkward mix of numpy and torch due to historic reasons. But it 
+    works!
+    
     Parameters
     ----------
-    mesh : pymesh.Mesh.Mesh
-        Mesh for which holes are to be closed.
+    vertices : torch.Tensor, [n_vertices, n_dimensions]
+        Vertices of the mesh which holes has to be closed.
+    faces : torch.Tensor, [n_faces, n_dimensions]
+        Faces of the mesh which holes has to be closed.
 
     Returns
     -------
-    mesh : pymesh.Mesh.Mesh
-        Mesh for which holes has been closed.
+    _vertices : torch.Tensor, [n_vertices, n_dimensions]
+        Vertices of the mesh which holes has been closed.
+    _faces : torch.Tensor, [n_faces, n_dimensions]
+        Faces of the mesh which holes has been closed.
 
     """
 
-    # # can't set attribute of mesh-obj. new obj must be created.
-    vertices = mesh.vertices
-    faces = mesh.faces
+    # convert to numpy.ndarrays
+    vertices = vertices.numpy()
+    faces = faces.numpy()
+    
+    # for storing the new vertices and faces 
+    _vertices = np.copy(vertices)
+    _faces = np.copy(faces)
 
     # get edges
-    edges = np.sort(np.concatenate((mesh.faces[:, :2], mesh.faces[:, 1:], mesh.faces[:, [0, 2]]), axis=0), axis=-1)
-    assert len(edges) == 3*len(mesh.faces), 'Number of edges were computed wrongly.' # for triangular mesh
+    edges = np.sort(np.concatenate((faces[:, :2], faces[:, 1:], faces[:, [0, 2]]), axis=0), axis=-1)
+    assert len(edges) == 3*len(faces), 'Number of edges were computed wrongly.' # for triangular mesh
     edges_unique, edges_idxs_unique, edges_counts_unique = np.unique(edges, return_index=True, return_counts=True, axis=0)
 
     # check if any holes exist
     if edges.shape[0] == 2*edges_unique.shape[0]:
         # every edge is used twice... consistent with a closed manifold mesh
         print('No problem! No holes here.')
-        return mesh
+        return vertices, faces
     else:
         pass
 
@@ -172,7 +156,7 @@ def close_holes(mesh):
     print(f'Closing {len(holes)} holes.')
 
     #### Generate patches
-    center_all = np.mean(mesh.vertices, axis=0)
+    center_all = np.mean(vertices, axis=0)
     center_all = center_all / np.linalg.norm(center_all) #normalize
 
     # For each hole
@@ -183,16 +167,16 @@ def close_holes(mesh):
         #### generate new vertice
         # works for circular holes. WON'T WORK FOR ODDLY SHAPED HOLES.
         # extract vertices
-        vertices_oi = mesh.vertices[np.unique(hole.ravel()), :]
+        vertices_oi = vertices[np.unique(hole.ravel()), :]
         # compute new vertice as center of mass.
         vertice_new = np.mean(vertices_oi, axis=0)
 
         # add new vertice to vertices
-        vertices = np.vstack((vertices, vertice_new))
+        _vertices = np.vstack((_vertices, vertice_new))
 
         #### generate new faces
         # for each edge in the hole, generate a new face by connecting to center of mass
-        vertice_new_idx = len(vertices) - 1
+        vertice_new_idx = len(_vertices) - 1
         faces_new = np.hstack((hole, np.ones((hole.shape[0], 1))*vertice_new_idx)).astype(np.int)
 
         #### ensure that the normal of each new face points outwards
@@ -201,19 +185,18 @@ def close_holes(mesh):
         vector_hole_to_center = vector_hole_to_center / np.linalg.norm(vector_hole_to_center)
 
         # compute normals
-        normals_new = get_face_normals(vertices, faces_new)
+        normals_new = get_face_normals(_vertices, faces_new)
 
         # compute angles w.r.t. reference vector
-        #angles = np.arccos(np.dot(center_all[np.newaxis, :], normals_new.T)) ####
         angles = np.arccos(np.dot(vector_hole_to_center[np.newaxis, :], normals_new.T)) ####
 
         # flip bad normals
-        #faces_new[(angles < np.pi/2)[0, :], :] = np.fliplr(faces_new[(angles < np.pi/2)[0, :], :]) ####
         faces_new[(angles > np.pi/2)[0, :], :] = np.fliplr(faces_new[(angles > np.pi/2)[0, :], :]) ####
 
         #### add new faces to faces
-        faces = np.vstack((faces, faces_new))
+        _faces = np.vstack((_faces, faces_new))
 
-    mesh = pymesh.form_mesh(vertices, faces)
-
-    return mesh
+    _vertices = torch.Tensor(_vertices)
+    _faces = torch.Tensor(_faces).type(torch.long)
+    
+    return _vertices, _faces

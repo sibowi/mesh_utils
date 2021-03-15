@@ -1,0 +1,21 @@
+name: mesh_utils
+channels:
+  - pytorch
+  - conda-forge
+  - iopath
+  - bottler
+  - pytorch3d
+  - plotly
+dependencies:
+  - pytorch=1.7.0
+  - torchvision
+  - cudatoolkit=10.2
+  - fvcore
+  - iopath
+  - nvidiacub
+  - pytorch3d
+  - jupyter
+  - plotly
+  - chart-studio
+  - scikit-image
+  - tqdm

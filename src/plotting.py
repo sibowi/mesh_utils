@@ -2,15 +2,8 @@ import plotly
 import plotly.graph_objects as go
 import numpy as np
 
-def create_figure_for_inspection(mesh, path_figure):
-    
-    if type(mesh) == tuple:
-        vertices, faces = mesh
-    else:
-        vertices = mesh.vertices
-        faces = mesh.faces
+def create_figure_for_inspection(vertices, faces, path_figure):
 
-    #plot_mesh = get_mesh_plot([mesh.vertices], [mesh.faces], show_edges=True)
     plot_mesh = get_mesh_plot([vertices], [faces], show_edges=True)
     
     #### Set layout
@@ -55,19 +48,20 @@ def get_mesh_plot(vertices_all, faces_all, face_color='rgb(240, 240, 240)', show
     """
     TBW
     """
-    assert len(np.shape(vertices_all)) == len(np.shape(vertices_all))
+    #assert len(np.shape(vertices_all)) == len(np.shape(vertices_all))
+    #assert len(np.shape(np.array(vertices_all))) == len(np.shape(np.array(vertices_all)))
 
-    if (len(np.shape(vertices_all)) == 2):
-        vertices_all = [vertices_all]
-        faces_all = [faces_all]
-    elif (len(np.shape(vertices_all)) == 1):
-        pass
-    elif (len(np.shape(vertices_all)) == 3):
-        # TODO: What's going on here
-        pass
-    else:
-        print(f'Something with shape of inputs...')
-        exit()
+    #if (len(np.shape(vertices_all)) == 2):
+    #    vertices_all = [vertices_all]
+    #    faces_all = [faces_all]
+    #elif (len(np.shape(vertices_all)) == 1):
+    #    pass
+    #elif (len(np.shape(vertices_all)) == 3):
+    #    # TODO: What's going on here
+    #    pass
+    #else:
+    #    print(f'Something with shape of inputs...')
+    #    exit()
 
     data = []
 
