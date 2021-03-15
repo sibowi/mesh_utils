@@ -1,5 +1,7 @@
 # mesh_utils
 
+### Functionality
+
 [Close round-ish holes in meshes](https://github.com/sibowi/mesh_utils/blob/main/notebooks/0_close_roundish_holes_in_meshes_tutorial.ipynb).
 
 [Do segmentation of mesh in voxel-space](https://github.com/sibowi/mesh_utils/blob/main/notebooks/0_mesh2voxel_tutorial.ipynb).
