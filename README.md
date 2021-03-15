@@ -10,6 +10,6 @@
 
 conda config --set channel_priority strict
 
-conda env create -n mesh_utils python=3.6.7 -f path/to/environment.yml
+conda env create -n mesh_utils python=3.7 -f path/to/environment.yml
 
 conda activate mesh_utils
